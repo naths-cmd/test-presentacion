@@ -2,16 +2,130 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Mi Presentación</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión - MVP</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #1a1a1a; color: white; }
-        .slide { text-align: center; }
+        /* Estilos Globales */
+        body { font-family: system-ui, sans-serif; background: #0f172a; color: white; margin: 0; padding: 0; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+        
+        /* --- ESTILOS DEL SECTOR LOGIN --- */
+        .login-container { background: #1e293b; padding: 2.5rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 100%; max-width: 350px; text-align: center; border: 1px solid #334155; }
+        .login-container input { width: 90%; padding: 12px; margin: 10px 0; border-radius: 6px; border: none; background: #0f172a; color: white; border: 1px solid #334155; }
+        .login-container button { width: 96%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 15px; transition: 0.2s; }
+        .login-container button:hover { background: #2563eb; }
+        #error-msg { color: #ef4444; font-size: 0.85rem; margin-top: 10px; display: none; }
+
+        /* --- ESTILOS DEL SECTOR DASHBOARD (Oculto al principio) --- */
+        #vista-dashboard { display: none; width: 100%; min-height: 100vh; box-sizing: border-box; padding: 20px; background: #0f172a; }
+        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 15px; margin-bottom: 25px; }
+        .kpi-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; width: 100%; }
+        .kpi-card { background: #1e293b; padding: 20px; border-radius: 10px; border: 1px solid #334155; }
+        .kpi-title { font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; margin: 0; }
+        .kpi-value { font-size: 1.8rem; font-weight: bold; margin: 10px 0 0 0; color: #38bdf8; }
+        .chart-container { background: #1e293b; padding: 20px; border-radius: 10px; border: 1px solid #334155; max-width: 800px; margin: 0 auto; }
+        .btn-salir { background: #ef4444; color: white; border: none; padding: 8px 15px; border-radius: 6px; font-size: 0.9rem; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="slide">
-        <h1>Diapositiva 1</h1>
-        <p>Mi primera presentación hosteada en Git</p>
+
+    <div id="vista-login" class="login-container">
+        <h2>🚀 Panel de Acceso</h2>
+        <p style="color: #94a3b8; font-size: 0.9rem;">Introduce tus credenciales de administrador</p>
+        
+        <input type="text" id="usuario" placeholder="Usuario (admin)">
+        <input type="password" id="clave" placeholder="Contraseña (1234)">
+        
+        <button onclick="controlarAcceso()">INGRESAR AL SISTEMA</button>
+        <p id="error-msg">❌ Usuario o contraseña incorrectos</p>
     </div>
+
+
+    <div id="vista-dashboard">
+        <header>
+            <h2>📊 Panel de Control Principal</h2>
+            <div>
+                <span style="margin-right: 15px; color: #94a3b8;">Sesión activa: <b style="color: white;">Admin</b></span>
+                <button class="btn-salir" onclick="cerrarSesion()">Cerrar Sesión</button>
+            </div>
+        </header>
+
+        <div class="kpi-container">
+            <div class="kpi-card">
+                <p class="kpi-title">Ventas Totales</p>
+                <p class="kpi-value">$1,240,500</p>
+            </div>
+            <div class="kpi-card">
+                <p class="kpi-title">Usuarios en Línea</p>
+                <p class="kpi-value">342</p>
+            </div>
+            <div class="kpi-card">
+                <p class="kpi-title">Rendimiento Base de Datos</p>
+                <p class="kpi-value" style="color: #4ade80;">Conectado (Mock BD)</p>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h3 style="margin-top:0;">Estadísticas de Operaciones Semanales</h3>
+            <canvas id="graficoCanvas"></canvas>
+        </div>
+    </div>
+
+
+    <script>
+        // Función principal de Login
+        function controlarAcceso() {
+            const user = document.getElementById('usuario').value;
+            const pass = document.getElementById('clave').value;
+
+            // Validación de credenciales
+            if (user === 'admin' && pass === '1234') {
+                
+                // 1. Cambiamos la estructura visual del Body para que se adapte al Dashboard
+                document.body.style.display = "block"; 
+                
+                // 2. Ocultamos el Login y mostramos el Dashboard
+                document.getElementById('vista-login').style.display = 'none';
+                document.getElementById('vista-dashboard').style.display = 'block';
+                
+                // 3. Renderizamos el gráfico recién cuando la pantalla es visible (sino da error de tamaño)
+                cargarGrafico();
+
+            } else {
+                // Si está mal, mostramos el texto de error
+                document.getElementById('error-msg').style.display = 'block';
+            }
+        }
+
+        // Función para el botón de Cerrar Sesión
+        function cerrarSesion() {
+            // Recargamos la página por completo, lo que resetea el estado y vuelve al Login limpio
+            window.location.reload();
+        }
+
+        // Configuración y dibujo del gráfico con Chart.js
+        function cargarGrafico() {
+            const ctx = document.getElementById('graficoCanvas').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'],
+                    datasets: [{
+                        label: 'Peticiones procesadas por el Servidor',
+                        data: [420, 590, 810, 620, 930],
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+    </script>
 </body>
 </html>
